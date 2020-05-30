@@ -133,13 +133,14 @@ class K_GCN(nn.Module):
     """
     Neural network block that applies a graph convolution to to sampled location.
     """
-    def __init__(self, in_channels, out_channels, activation = 'relu'):     
+    def __init__(self, in_channels, out_channels, activation = 'selu'):     
         
         """
         :param in_channels: Number of time step.
         :param out_channels: Desired number of output features at each node in
         each time step.
         :param num_nodes: Number of nodes in the graph.
+        :relu is not good for K_GCN on Kriging, so we suggest 'selu' 
         """
         super(K_GCN, self).__init__()
         self.Theta1 = nn.Parameter(torch.FloatTensor(in_channels,
