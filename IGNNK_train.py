@@ -25,7 +25,7 @@ def parse_args(args):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="Parse argument used when training IGNNK model.",
-        epilog="python IGNNK_main.py DATASET")
+        epilog="python IGNNK_train.py DATASET, for example: python IGNNK_train.py 'metr' ")
 
     # Requird input parametrs
     parser.add_argument(
@@ -71,7 +71,7 @@ def parse_args(args):
         help='the max value from experience'
     )
     parser.add_argument(
-        '--batch_size',type=int,default=8,
+        '--batch_size',type=int,default=4,
         help='Batch size'
     )                 
     parser.add_argument(
@@ -91,6 +91,25 @@ def load_data(dataset):
     if dataset == 'metr':
         A, X = load_metr_la_rdata()
         X = X[:,0,:]
+    elif dataset == 'nrel':
+        A, X , files_info = load_nerl_data()
+        #For Nrel, We only use 7:00am to 7:00pm as the target data, because otherwise the 0-values of periods without sunshine will greatly influence the results
+        time_used_base = np.arange(84,228)
+        time_used = np.array([])
+        for i in range(365):
+            time_used = np.concatenate((time_used,time_used_base + 24*12* i))
+        X=X[:,time_used.astype(np.int)]
+    elif dataset == 'ushcn':
+        A,X,Omissing = load_udata()
+        X = X[:,:,:,0]
+        X = X.reshape(1218,120*12)
+        X = X/100
+    elif dataset == 'sedata':
+        A, X = load_sedata()
+        A = A.astype('float32')
+        X = X.astype('float32')
+    elif dataset == 'pems':
+        A,X = load_pems_data()
     else:
         raise NotImplementedError('Please specify datasets from: metr, nrel, ushcn, sedata or pems')
     split_line1 = int(X.shape[1] * 0.7)
@@ -220,13 +239,13 @@ def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
         
     return MAE, RMSE, MAPE  
 
-def plot_res(RMSE_list,dataset):
+def plot_res(RMSE_list,dataset,time_batch):
     """
     Draw Learning curves on testing error
     """    
     fig,ax = plt.subplots()
     ax.plot(RMSE_list,label='RMSE_on_test_set',linewidth=3.5)
-    ax.set_xlabel('Training Batch (x249)',fontsize=20)
+    ax.set_xlabel('Training Batch (x{:})'.format(time_batch),fontsize=20)
     ax.set_ylabel('RMSE',fontsize=20)
     ax.tick_params(axis="x", labelsize=14)
     ax.tick_params(axis="y", labelsize=14)
@@ -304,4 +323,4 @@ if __name__ == "__main__":
         print(epoch, MAE_t, RMSE_t, MAPE_t)
     
     if to_plot:
-        plot_res(RMSE_list,dataset)
+        plot_res(RMSE_list,dataset,training_set.shape[0]//(h * batch_size))
