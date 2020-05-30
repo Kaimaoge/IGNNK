@@ -51,7 +51,7 @@ unknow_set = rand.choice(list(range(0,X.shape[0])),N_u,replace=False)
 unknow_set = set(unknow_set)
 full_set = set(range(0,207))        
 know_set = full_set - unknow_set
-training_set_s = training_set[:, list(know_set)]   # get the sampled time period
+training_set_s = training_set[:, list(know_set)]   # get the training data in the sample time period
 A_s = A[:, list(know_set)][list(know_set), :]      # get the observed adjacent matrix from the full adjacent matrix,
                                                    # the adjacent matrix are based on pairwise distance, 
                                                    # so we need not to construct it for each batch, we just use index to find the dynamic adjacent matrix
