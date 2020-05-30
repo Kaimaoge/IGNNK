@@ -31,7 +31,7 @@ learning_rate = 0.0001 #the learning_rate for Adam optimizer
 
 E_maxvalue = 80 #the max value from experience
 
-batch_size = 8
+batch_size = 4 
 
 
 
