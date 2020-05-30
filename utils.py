@@ -31,6 +31,8 @@ def get_Laplace(A):
     """
     Returns the laplacian adjacency matrix. This is for C_GCN
     """
+    if A[0, 0] == 1:
+        A = A - np.diag(np.ones(A.shape[0], dtype=np.float32)) # if the diag has been added by 1s
     D = np.array(np.sum(A, axis=1)).reshape((-1,))
     D[D <= 10e-5] = 10e-5
     diag = np.reciprocal(np.sqrt(D))
@@ -42,7 +44,8 @@ def get_normalized_adj(A):
     """
     Returns the degree normalized adjacency matrix. This is for K_GCN
     """
-    A = A + np.diag(np.ones(A.shape[0], dtype=np.float32))
+    if A[0, 0] == 0:
+        A = A + np.diag(np.ones(A.shape[0], dtype=np.float32)) # if the diag has been added by 1s
     D = np.array(np.sum(A, axis=1)).reshape((-1,))
     D[D <= 10e-5] = 10e-5    # Prevent infs
     diag = np.reciprocal(np.sqrt(D))
