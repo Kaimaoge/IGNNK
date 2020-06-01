@@ -169,7 +169,7 @@ def generate_ushcn_data():
     for i in range(1218):
         for j in range(1218):
             sim[i,j] = haversine(latlon[i, 1], latlon[i, 0], latlon[j, 1], latlon[j, 0]) #RBF
-    sim = np.exp(-sim/7500/10)
+    sim = np.exp(-sim/10000/10)
 
     joblib.dump(Utensor,'data/ushcn/Utensor.joblib')
     joblib.dump(Omissing,'data/ushcn/Omissing.joblib')
