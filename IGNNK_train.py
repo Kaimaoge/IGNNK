@@ -87,7 +87,9 @@ def load_data(dataset):
     -------
     A: adjacency matrix 
     X: processed data
+    capacity: only works for NREL, each station's capacity
     '''
+    capacity = []
     if dataset == 'metr':
         A, X = load_metr_la_rdata()
         X = X[:,0,:]
@@ -99,6 +101,8 @@ def load_data(dataset):
         for i in range(365):
             time_used = np.concatenate((time_used,time_used_base + 24*12* i))
         X=X[:,time_used.astype(np.int)]
+        capacities = np.array(files_info['capacity'])
+        capacities = capacities.astype('float32')
     elif dataset == 'ushcn':
         A,X,Omissing = load_udata()
         X = X[:,:,:,0]
@@ -124,7 +128,7 @@ def load_data(dataset):
     A_s = A[:, list(know_set)][list(know_set), :]      # get the observed adjacent matrix from the full adjacent matrix,
                                                     # the adjacent matrix are based on pairwise distance, 
                                                     # so we need not to construct it for each batch, we just use index to find the dynamic adjacent matrix  
-    return A,X,training_set,test_set,unknow_set,full_set,know_set,training_set_s,A_s     
+    return A,X,training_set,test_set,unknow_set,full_set,know_set,training_set_s,A_s,capacity     
 
 """
 Define the test error
@@ -167,7 +171,10 @@ def test_error(STmodel, unknow_set, test_data, A_s, Missing0):
         imputation = imputation.data.numpy()
         o[i:i+time_dim, :] = imputation[0, :, :]
     
-    o = o*E_maxvalue 
+    if dataset == 'NREL':  
+        o = o*capacities[None,:]
+    else:
+        o = o*E_maxvalue
     truth = test_inputs_s[0:test_set.shape[0]//time_dim*time_dim]
     o[missing_index_s[0:test_set.shape[0]//time_dim*time_dim] == 1] = truth[missing_index_s[0:test_set.shape[0]//time_dim*time_dim] == 1]
     
@@ -226,7 +233,10 @@ def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     truth = test_inputs_s[time_dim:test_set.shape[0]]
     o[missing_index_s[time_dim:test_set.shape[0]] == 1] = truth[missing_index_s[time_dim:test_set.shape[0]] == 1]
     
-    o = o*E_maxvalue
+    if dataset == 'NREL':  
+        o = o*capacities[None,:]
+    else:
+        o = o*E_maxvalue
     truth = test_inputs_s[0:test_set.shape[0]//time_dim*time_dim]
     test_mask =  1 - missing_index_s[time_dim:test_set.shape[0]]
     if Missing0 == True:
@@ -272,7 +282,7 @@ if __name__ == "__main__":
     batch_size = flags.batch_size
     to_plot = flags.to_plot
     # load dataset
-    A,X,training_set,test_set,unknow_set,full_set,know_set,training_set_s,A_s = load_data(dataset)
+    A,X,training_set,test_set,unknow_set,full_set,know_set,training_set_s,A_s,capacity = load_data(dataset)
     # Define model
     STmodel = IGNNK(h, z, K)  # The graph neural networks
 
@@ -291,15 +301,18 @@ if __name__ == "__main__":
             
             inputs = np.array(feed_batch)
             inputs_omask = np.ones(np.shape(inputs))
-            inputs_omask[inputs == 0] = 0           # We found that there are irregular 0 values for METR-LA, so we treat those 0 values as missing data,
-                                                    # For other datasets, it is not necessary to mask 0 values
+            if not dataset == 'NREL': 
+                inputs_omask[inputs == 0] = 0           # We found that there are irregular 0 values for METR-LA, so we treat those 0 values as missing data,
+                                                        # For other datasets, it is not necessary to mask 0 values
                                                     
             missing_index = np.ones((inputs.shape))
             for j in range(batch_size):
                 missing_mask = random.sample(range(0,n_o_n_m),n_m) #Masked locations
                 missing_index[j, :, missing_mask] = 0
-                
-            Mf_inputs = inputs * inputs_omask * missing_index / E_maxvalue #normalize the value according to experience
+            if dataset == 'NREL':
+                Mf_inputs = inputs * inputs_omask * missing_index / capacities[:, None]
+            else:
+                Mf_inputs = inputs * inputs_omask * missing_index / E_maxvalue #normalize the value according to experience
             Mf_inputs = torch.from_numpy(Mf_inputs.astype('float32'))
             mask = torch.from_numpy(inputs_omask.astype('float32'))   #The reconstruction errors on irregular 0s are not used for training
             
@@ -307,7 +320,10 @@ if __name__ == "__main__":
             A_q = torch.from_numpy((calculate_random_walk_matrix(A_dynamic).T).astype('float32'))
             A_h = torch.from_numpy((calculate_random_walk_matrix(A_dynamic.T).T).astype('float32'))
             
-            outputs = torch.from_numpy(inputs/E_maxvalue) #The label
+            if dataset == 'NREL':
+                outputs = torch.from_numpy(inputs/capacities[:, None])
+            else:
+                outputs = torch.from_numpy(inputs/E_maxvalue) #The label
             
             optimizer.zero_grad()
             X_res = STmodel(Mf_inputs, A_q, A_h)  #Obtain the reconstruction
@@ -315,8 +331,10 @@ if __name__ == "__main__":
             loss = criterion(X_res*mask, outputs*mask)
             loss.backward()
             optimizer.step()        #Errors backward
-        
-        MAE_t, RMSE_t, MAPE_t = test_error(STmodel, unknow_set, test_set, A, True)
+        if not dataset == 'NREL' 
+            MAE_t, RMSE_t, MAPE_t = test_error(STmodel, unknow_set, test_set, A, True)
+        else:
+            MAE_t, RMSE_t, MAPE_t = test_error(STmodel, unknow_set, test_set, A, False)
         RMSE_list.append(RMSE_t)
         MAE_list.append(MAE_t)
         MAPE_list.append(MAPE_t)
