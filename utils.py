@@ -109,7 +109,7 @@ def generate_nerl_data():
             d = haversine(lng1,lat1,lng2,lat2)
             A[i,j] = d
 
-    A = A/np.max(A)
+    A = A/7500 # distance / 7.5 km
     A += A.T + np.diag(A.diagonal())
     A = np.exp(-A)
     np.save('data/nrel/nerl_A.npy',A)
@@ -168,7 +168,8 @@ def generate_ushcn_data():
 
     for i in range(1218):
         for j in range(1218):
-            sim[i,j] = np.exp( - ( (latlon[i, 0] - latlon[j, 0])**2 + (latlon[i, 1] - latlon[j, 1])**2) ) #RBF
+            sim[i,j] = haversine(latlon[i, 1], latlon[i, 0], latlon[j, 1], latlon[j, 0]) #RBF
+    sim = np.exp(-sim/7500/50)
 
     joblib.dump(Utensor,'data/ushcn/Utensor.joblib')
     joblib.dump(Omissing,'data/ushcn/Omissing.joblib')
