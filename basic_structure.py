@@ -170,6 +170,48 @@ class K_GCN(nn.Module):
             t2 = F.selu(t2)
         
         return t2 
+    
+class GAT(nn.Module):
+    """
+    Neural network block that applies attention mechnism to sampled location (only the attention).
+    """
+    def __init__(self, in_channels, alpha, concat = True): 
+        """
+        :param in_channels: Number of time step.
+        :param alpha: alpha for leaky Relu.
+        :param concat: whether concat features
+        :It should be noted that the input layer should use linear activation
+        """
+        super(GAT, self).__init__()
+        self.alpha = alpha
+        self.concat = concat
+        self.in_channels = in_channels
+        self.a = nn.Parameter(torch.zeros(size=(2*in_channels, 1)))
+        nn.init.xavier_uniform_(self.a.data, gain=1.414)
+        
+        self.leakyrelu = nn.LeakyReLU(self.alpha)
+        
+    def forward(self, input, adj):
+        
+          # num of nodes
+        h = input
+        B = h.size()[0]
+        N = h.size()[1]
+        
+        a_input = torch.cat([h.repeat(1, 1, N).view(B, N * N, self.in_channels), h.repeat(1, N, 1)], dim=2).view(B, N, N, 2 * self.in_channels)
+        e = self.leakyrelu(torch.matmul(a_input, self.a).squeeze(3))
+        zero_vec = -9e15*torch.ones_like(e)
+                
+        attention = torch.where(adj.unsqueeze(0).repeat(B, 1, 1) > 0.05, e, zero_vec) #0.05 for distance matrix
+        
+        attention = F.softmax(attention, dim=2)
+        
+        h_prime = torch.matmul(attention, h)
+        
+        if self.concat:
+            return F.elu(h_prime)
+        else:
+            return h_prime
 
 '''
 Buitld the GNN
