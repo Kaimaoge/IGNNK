@@ -173,7 +173,7 @@ class K_GCN(nn.Module):
     
 class GAT(nn.Module):
     """
-    Neural network block that applies attention mechnism to sampled location (only the attention).
+    Neural network block that applies attention mechanism to sampled locations (only the attention).
     """
     def __init__(self, in_channels, alpha, concat = True): 
         """
