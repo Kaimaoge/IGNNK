@@ -9,7 +9,7 @@ from utils import load_metr_la_rdata, get_normalized_adj, get_Laplace, calculate
 import random
 import pandas as pd
 from basic_structure import D_GCN, C_GCN, K_GCN
-
+import geopandas as gp
 '''
 Hyper parameters
 '''
@@ -156,7 +156,7 @@ def test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     RMSE = np.sqrt(np.sum((o - truth)*(o - truth))/np.sum( test_mask) )
     MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
     
-    return MAE, RMSE, MAPE
+    return MAE, RMSE, MAPE, o
 
 
 def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
@@ -213,7 +213,7 @@ def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     RMSE = np.sqrt(np.sum((o - truth)*(o - truth))/np.sum( test_mask) )
     MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)  #avoid x/0
         
-    return MAE, RMSE, MAPE  
+    return MAE, RMSE, MAPE, o
 
 """
 Model training
@@ -258,7 +258,7 @@ for epoch in range(Max_episode):
         loss.backward()
         optimizer.step()        #Errors backward
     
-    MAE_t, RMSE_t, MAPE_t = test_error(STmodel, unknow_set, test_set, A, True)
+    MAE_t, RMSE_t, MAPE_t, metr_ignnc_res  = test_error(STmodel, unknow_set, test_set, A, True)
     RMSE_list.append(RMSE_t)
     MAE_list.append(MAE_t)
     MAPE_list.append(MAPE_t)
@@ -279,3 +279,73 @@ ax.legend(fontsize=16)
 plt.grid(True)
 plt.tight_layout()
 plt.savefig('learning_curve_METR_LA.pdf')
+
+"""
+Draw spatial information of METR-LA kriging
+"""
+url_census='data/metr/Census_Road_2010_shapefile/Census_Road_2010.shp'
+meta_locations = pd.read_csv('data/metr/graph_sensor_locations.csv')
+map_metr=gp.read_file(url_census,encoding="utf-8")
+fig,axes = plt.subplots(2,2,figsize = (20,5))
+lng_div = 0.01
+lat_div = 0.01
+crowd = [127,160] #crowd and uncrowd, in the test time slice
+ylbs = ['Crowded','Uncrowded']
+
+for row in range(2):
+    for col in range(2):
+        ax = axes[row,col]
+        map_metr.plot(ax=ax,color='black')
+        ax.set_xlim((np.min(meta_locations['longitude'])-lng_div,np.max(meta_locations['longitude'])+lng_div))
+        ax.set_ylim((np.min(meta_locations['latitude'])-lat_div,np.max(meta_locations['latitude'])+lat_div))
+        ax.set_xticks([])
+        ax.set_yticks([])
+        if col == 0:
+            cax=ax.scatter(meta_locations['longitude'][list(know_set)],meta_locations['latitude'][list(know_set)],s=100,cmap=plt.cm.RdYlGn, c = test_set[crowd[row],list(know_set)],
+              norm=mlt.colors.Normalize(vmin=X.min(), vmax = X.max()),alpha=0.6,label='Known nodes')
+            cax2=ax.scatter(meta_locations['longitude'][list(unknow_set)],meta_locations['latitude'][list(unknow_set)],s=250,cmap=plt.cm.RdYlGn,c=test_set[crowd[row],list(unknow_set)],
+              norm=mlt.colors.Normalize(vmin=X.min(), vmax = X.max()),alpha=1,marker='*',label = 'Unknown nodes')
+            ax.set_ylabel(ylbs[row],fontsize=20)
+            if row == 0:
+                ax.set_title('True',fontsize = 18)
+        else:
+            ax.scatter(meta_locations['longitude'][list(know_set)],meta_locations['latitude'][list(know_set)],s=100,cmap=plt.cm.RdYlGn, c = test_set[crowd[row],list(know_set)],
+              norm=mlt.colors.Normalize(vmin=X.min(), vmax = X.max()),alpha=0.6)
+            ax.scatter(meta_locations['longitude'][list(unknow_set)],meta_locations['latitude'][list(unknow_set)],s=250,cmap=plt.cm.RdYlGn,c=metr_ignnc_res[crowd[row],list(unknow_set)],
+              norm=mlt.colors.Normalize(vmin=X.min(), vmax = X.max()),alpha=1,marker='*')
+            if row == 0:
+                ax.set_title('IGNNK',fontsize = 18)
+
+fig.tight_layout()
+fig.subplots_adjust(right = 0.9,hspace=0.01,wspace =0.01,bottom=0,top=1)
+l = 0.92
+b = 0.03
+w = 0.015
+h = 0.8
+rect = [l,b,w,h] 
+cbar_ax = fig.add_axes(rect) 
+cbar = fig.colorbar(cax, cax=cbar_ax)
+cbar.ax.tick_params(labelsize=16)
+
+plt.figlegend(handles=(cax,cax2),labels=('Known nodes','Unknown nodes'),bbox_to_anchor=(1.01, 1), loc=1, borderaxespad=0.,fontsize = 16 )
+plt.savefig('fig/metr_kriging_spatial_crowd{:}_uncrowd{:}.pdf'.format(crowd[0],crowd[1]))
+plt.show()
+
+"""
+Draw temporal information of METR-LA kriging
+"""
+fig,ax = plt.subplots(figsize = (16,5))
+s = int(6400-64)
+e = int(s + 24*60/5+1)
+station = list(unknow_set)[13]
+ax.plot(test_set[s:e,station],label='True',linewidth=3)
+ax.plot(metr_ignnc_res[s:e,station],label='IGNNK',linewidth = 3)
+ax.set_ylabel('mile/h',fontsize=20)
+ax.tick_params(axis="x", labelsize=14)
+ax.tick_params(axis="y", labelsize=14)
+ax.set_xticks(range(0,350,50))
+ax.set_xticklabels(['0:00\nMar 3rd','4:00','8:00','12:00','16:00','20:00','0:00\nMar 4th'])
+ax.legend(bbox_to_anchor=(1, 1), loc=0, borderaxespad=0,fontsize=16)
+plt.tight_layout()
+plt.savefig('metr_kriging_temporal.pdf')
+plt.show()
