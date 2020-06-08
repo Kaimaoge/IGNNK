@@ -258,7 +258,7 @@ for epoch in range(Max_episode):
         loss.backward()
         optimizer.step()        #Errors backward
     
-    MAE_t, RMSE_t, MAPE_t, metr_ignnc_res  = test_error(STmodel, unknow_set, test_set, A, True)
+    MAE_t, RMSE_t, MAPE_t, metr_ignnk_res  = test_error(STmodel, unknow_set, test_set, A, True)
     RMSE_list.append(RMSE_t)
     MAE_list.append(MAE_t)
     MAPE_list.append(MAPE_t)
@@ -311,7 +311,7 @@ for row in range(2):
         else:
             ax.scatter(meta_locations['longitude'][list(know_set)],meta_locations['latitude'][list(know_set)],s=100,cmap=plt.cm.RdYlGn, c = test_set[crowd[row],list(know_set)],
               norm=mlt.colors.Normalize(vmin=X.min(), vmax = X.max()),alpha=0.6)
-            ax.scatter(meta_locations['longitude'][list(unknow_set)],meta_locations['latitude'][list(unknow_set)],s=250,cmap=plt.cm.RdYlGn,c=metr_ignnc_res[crowd[row],list(unknow_set)],
+            ax.scatter(meta_locations['longitude'][list(unknow_set)],meta_locations['latitude'][list(unknow_set)],s=250,cmap=plt.cm.RdYlGn,c=metr_ignnk_res[crowd[row],list(unknow_set)],
               norm=mlt.colors.Normalize(vmin=X.min(), vmax = X.max()),alpha=1,marker='*')
             if row == 0:
                 ax.set_title('IGNNK',fontsize = 18)
@@ -339,7 +339,7 @@ s = int(6400-64)
 e = int(s + 24*60/5+1)
 station = list(unknow_set)[13]
 ax.plot(test_set[s:e,station],label='True',linewidth=3)
-ax.plot(metr_ignnc_res[s:e,station],label='IGNNK',linewidth = 3)
+ax.plot(metr_ignnk_res[s:e,station],label='IGNNK',linewidth = 3)
 ax.set_ylabel('mile/h',fontsize=20)
 ax.tick_params(axis="x", labelsize=14)
 ax.tick_params(axis="y", labelsize=14)
