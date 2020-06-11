@@ -175,15 +175,17 @@ class GAT(nn.Module):
     """
     Neural network block that applies attention mechanism to sampled locations (only the attention).
     """
-    def __init__(self, in_channels, alpha, concat = True): 
+    def __init__(self, in_channels, alpha, threshold, concat = True): 
         """
         :param in_channels: Number of time step.
         :param alpha: alpha for leaky Relu.
+        :param threshold: threshold for graph connection
         :param concat: whether concat features
         :It should be noted that the input layer should use linear activation
         """
         super(GAT, self).__init__()
         self.alpha = alpha
+        self.threshold = threshold
         self.concat = concat
         self.in_channels = in_channels
         self.a = nn.Parameter(torch.zeros(size=(2*in_channels, 1)))
@@ -202,7 +204,7 @@ class GAT(nn.Module):
         e = self.leakyrelu(torch.matmul(a_input, self.a).squeeze(3))
         zero_vec = -9e15*torch.ones_like(e)
                 
-        attention = torch.where(adj.unsqueeze(0).repeat(B, 1, 1) > 0.05, e, zero_vec) #0.05 for distance matrix
+        attention = torch.where(adj.unsqueeze(0).repeat(B, 1, 1) > self.threshold, e, zero_vec) #>threshold for attention connection
         
         attention = F.softmax(attention, dim=2)
         
