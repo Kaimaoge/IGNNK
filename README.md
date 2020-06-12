@@ -79,4 +79,3 @@ for other datasets:
 `python IGNNK_train.py "sedata" --n_o 240 --h 24 --n_m 80 --n_u 80 --max_iter 750`
 
 
-
