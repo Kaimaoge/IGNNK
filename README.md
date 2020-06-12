@@ -3,6 +3,12 @@
 This is the code corresponding to the experiments conducted for the work "Inductive Graph Neural Networks for Spatiotemporal Kriging"
 (Yuankai Wu, Dingyi Zhuang, Aurelie Labbe and Lijun Sun).
 
+## Motivations
+
+In many applications, placing sensors with fully spatial coverage may be impractical. Installation and maintenance costs of devices can also limit the number of sensors deployed in a network. A better kriging model can achieve higher estimation accuracy/reliability with less number of sensors, thus reducing the operation and maintenance cost of a sensor network. The kriging results can produce a fine-grained and high-resolution realization of spatiotemporal data, which can be used to enhance real-world applications such as travel time estimation and disaster evaluation.
+
+A limitation with traditional methods is that they are essentially *transductive*, for new sensors/nodes introduced to the network, we cannot directly apply a previously trained model; instead, we have to retrain the full model even with only minor changes. Conversely, we develop an *Inductive* Graph Neural Network Kriging (IGNNK) model in this work. 
+
 ## Tasks
 
 <img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig1new2-1.png" width="800">
