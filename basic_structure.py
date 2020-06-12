@@ -238,7 +238,7 @@ class IGNNK(nn.Module):
 
         self.GNN1 = D_GCN(self.time_dimension, self.hidden_dimnesion, self.order)
         self.GNN2 = D_GCN(self.hidden_dimnesion, self.hidden_dimnesion, self.order)
-        self.GNN3 = D_GCN(self.hidden_dimnesion, self.time_dimension, self.order)
+        self.GNN3 = D_GCN(self.hidden_dimnesion, self.time_dimension, self.order, activation = 'linear')
 
     def forward(self, X, A_q, A_h):
         """
