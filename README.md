@@ -29,21 +29,21 @@ The datasets manipulated in this code can be downloaded on the following locatio
 
 #### Graph convolutional networks - K_GCN in basic_structure.py
 
-- Kipf, Thomas N., and Max Welling. ("Semi-Supervised Classification with Graph Convolutional Networks.")[https://arxiv.org/pdf/1609.02907.pdf] (ICLR 2016).
+- Kipf, Thomas N., and Max Welling. ["Semi-Supervised Classification with Graph Convolutional Networks."](https://arxiv.org/pdf/1609.02907.pdf) (ICLR 2016).
 
 #### Chebynet - C_GCN
 
-- Micha ̈el Defferrard, Xavier Bresson, and Pierre Vandergheynst. ("Convolutional neural networks ongraphs with fast localized spectral filtering.")[http://papers.nips.cc/paper/6081-convolutional-neural-networks-on-graphs-with-fast-localized-spectral-filtering.pdf] (NIPS 2016).
+- Micha ̈el Defferrard, Xavier Bresson, and Pierre Vandergheynst. ["Convolutional neural networks ongraphs with fast localized spectral filtering."](http://papers.nips.cc/paper/6081-convolutional-neural-networks-on-graphs-with-fast-localized-spectral-filtering.pdf) (NIPS 2016).
 
 #### Diffusion convolutional networks - D_GCN
 
-- Li, Y., Yu, R., Shahabi, C., & Liu, Y. ("Diffusion convolutional recurrent neural network: Data-driven traffic forecasting.")[https://arxiv.org/pdf/1707.01926.pdf] (ICLR 2017).
+- Li, Y., Yu, R., Shahabi, C., & Liu, Y. ["Diffusion convolutional recurrent neural network: Data-driven traffic forecasting."](https://arxiv.org/pdf/1707.01926.pdf) (ICLR 2017).
 
 Our IGNNK structure is based on the diffusion convolutional networks, one can always build his own structure using those basic building blocks. We will continue implementing more GNN structures that are suitable for kriging tasks.
 
 #### Graph attention networks - GAT
 
-- Veličković, P., Cucurull, G., Casanova, A., Romero, A., Lio, P., & Bengio, Y. ("Graph attention networks.")[https://arxiv.org/pdf/1710.10903.pdf] (NIPS 2017).
+- Veličković, P., Cucurull, G., Casanova, A., Romero, A., Lio, P., & Bengio, Y. ["Graph attention networks."](https://arxiv.org/pdf/1710.10903.pdf) (NIPS 2017).
 
 
 ### Training on the METR_LA datasets
