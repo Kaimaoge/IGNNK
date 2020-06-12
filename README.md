@@ -6,5 +6,5 @@ This is the code corresponding to the experiments conducted for the work "Induct
 # Tasks
 
 
-<img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig1new2.png" width="800">
-<img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig2new2.png" width="800">
+<img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig1new2-1.png" width="800">
+<img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig2new2-1.png" width="800">
