@@ -12,6 +12,7 @@ from basic_structure import IGNNK
 import argparse
 import sys
 import os
+import time
 
 def parse_args(args):
     '''Parse training options user can specify in command line.
@@ -342,3 +343,4 @@ if __name__ == "__main__":
     
     if to_plot:
         plot_res(RMSE_list,dataset,training_set.shape[0]//(h * batch_size))
+    torch.save(STmodel.state_dict(), 'model/IGNNK_{:}_{:}iter_{:}.pth'.format(dataset,max_iter,time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))) # Save the model
