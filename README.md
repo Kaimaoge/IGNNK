@@ -45,7 +45,7 @@ The datasets manipulated in this code can be downloaded on the following locatio
 
 - Li, Y., Yu, R., Shahabi, C., & Liu, Y. ["Diffusion convolutional recurrent neural network: Data-driven traffic forecasting."](https://arxiv.org/pdf/1707.01926.pdf) (ICLR 2017).
 
-Our IGNNK structure is based on the diffusion convolutional networks, one can always build his own structure using those basic building blocks. We will continue implementing more GNN structures that are suitable for kriging tasks.
+Our IGNNK structure is based on the diffusion convolutional networks, one can always builds his own structure using those basic building blocks. We will continue implementing more GNN structures that are suitable for kriging tasks.
 
 #### Graph attention networks - GAT
 
