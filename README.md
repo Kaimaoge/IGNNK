@@ -7,9 +7,9 @@ This is the code corresponding to the experiments conducted for the work "Induct
 
 >
 <p align="center">
-<img align="middle" src="https://github.com/Kaimaoge/IGNNK/blob/master/images/Fig1new2.pdf" width="800" />
+<img align="middle" src="https://github.com/Kaimaoge/IGNNK/blob/master/figs/Fig1new2.pdf" width="800" />
 </p>
 
 <p align="center">
-<img align="middle" src="https://github.com/Kaimaoge/IGNNK/blob/master/images/Fig2new2.pdf" width="800" />
+<img align="middle" src="https://github.com/Kaimaoge/IGNNK/blob/master/figs/Fig2new2.pdf" width="800" />
 </p>
