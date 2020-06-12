@@ -331,7 +331,7 @@ if __name__ == "__main__":
             loss = criterion(X_res*mask, outputs*mask)
             loss.backward()
             optimizer.step()        #Errors backward
-        if not dataset == 'NREL' 
+        if not dataset == 'NREL':
             MAE_t, RMSE_t, MAPE_t = test_error(STmodel, unknow_set, test_set, A, True)
         else:
             MAE_t, RMSE_t, MAPE_t = test_error(STmodel, unknow_set, test_set, A, False)

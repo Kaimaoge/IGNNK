@@ -1,5 +1,4 @@
 from __future__ import division
-
 import torch
 import numpy as np
 import torch.optim as optim
