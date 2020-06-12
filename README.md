@@ -11,7 +11,7 @@ A limitation with traditional methods is that they are essentially *transductive
 
 ## Tasks
 
-<img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig1new2-1.png" width="800"
+<img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig1new2-1.png" width="800">
 <img src="https://github.com/Kaimaoge/IGNNK/blob/master/fig/Fig2new2-1.png" width="800">
 
 The goal of spatiotemporal kriging is to perform signal interpolation for unsampled locations given the observed signals from sampled locations during the same period. We first randomly select a subset of nodes from all available sensors and create a corresponding subgraph. We mask some of them as missing and train the GNN to reconstruct the full signals of all nodes (including both the observed and the masked nodes) on the subgraph.
