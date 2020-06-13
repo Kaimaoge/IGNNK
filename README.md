@@ -41,6 +41,7 @@ The datasets manipulated in this code can be downloaded on the following locatio
 - `utils.py` file: preprocess datasets;
 - `basic_structure.py` file: pytorch implementation of basic graph neural network structure
 - `IGNNK_D_METR_LA.ipynb` file: a training example on METR_LA dataset
+- `IGNNK_U_Central_missing.ipynb` file: present the kriging of central US precipitation (USHCN weather condition)
 
 ### Basic GNNs implementation (basic_structure.py)
 
