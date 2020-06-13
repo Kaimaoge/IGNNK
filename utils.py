@@ -381,3 +381,47 @@ def rolling_test_error(STmodel, unknow_set, test_data, A_s, E_maxvalue,Missing0)
     MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)  #avoid x/0
         
     return MAE, RMSE, MAPE, o
+
+def test_error_cap(STmodel, unknow_set, full_set, test_set, A,time_dim,capacities):
+    unknow_set = set(unknow_set)
+    
+    test_omask = np.ones(test_set.shape)
+    test_omask[test_set == 0] = 0
+    test_inputs = (test_set * test_omask).astype('float32')
+    test_inputs_s = test_inputs#[:, list(proc_set)]
+
+    
+    missing_index = np.ones(np.shape(test_inputs))
+    missing_index[:, list(unknow_set)] = 0
+    missing_index_s = missing_index#[:, list(proc_set)]
+    
+    A_s = A#[:, list(proc_set)][list(proc_set), :]
+    o = np.zeros([test_set.shape[0]//time_dim*time_dim, test_inputs_s.shape[1]])
+    
+    for i in range(0, test_set.shape[0]//time_dim*time_dim, time_dim):
+        inputs = test_inputs_s[i:i+time_dim, :]
+        missing_inputs = missing_index_s[i:i+time_dim, :]
+        MF_inputs = inputs*missing_inputs
+        MF_inputs = MF_inputs/capacities
+        MF_inputs = np.expand_dims(MF_inputs, axis = 0)
+        MF_inputs = torch.from_numpy(MF_inputs.astype('float32'))
+        A_q = torch.from_numpy((calculate_random_walk_matrix(A_s).T).astype('float32'))
+        A_h = torch.from_numpy((calculate_random_walk_matrix(A_s.T).T).astype('float32'))
+        
+        imputation = STmodel(MF_inputs, A_q, A_h)
+        imputation = imputation.data.numpy()
+        o[i:i+time_dim, :] = imputation[0, :, :]
+    
+    o = o*capacities
+    truth = test_inputs_s[0:test_set.shape[0]//time_dim*time_dim]
+    o[missing_index_s[0:test_set.shape[0]//time_dim*time_dim] == 1] = truth[missing_index_s[0:test_set.shape[0]//time_dim*time_dim] == 1]
+    o[truth == 0] = 0
+    
+    test_mask =  1 - missing_index_s[0:test_set.shape[0]//time_dim*time_dim]
+    test_mask[truth == 0] = 0
+    
+    MAE = np.sum(np.abs(o - truth))/np.sum( test_mask)
+    RMSE = np.sqrt(np.sum((o - truth)*(o - truth))/np.sum( test_mask) )
+    MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
+    
+    return MAE, RMSE, MAPE ,o 
