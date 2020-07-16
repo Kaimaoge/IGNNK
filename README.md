@@ -1,4 +1,4 @@
-# Inductive Graph Neural Networks for Spatiotemporal Kriging (IGNNK) -- Code
+# Inductive Graph Neural Networks for Spatiotemporal Kriging (IGNNK)
 
 This is the code corresponding to the experiments conducted for the work "[Inductive Graph Neural Networks for Spatiotemporal Kriging](https://arxiv.org/abs/2006.07527)"
 (Yuankai Wu, Dingyi Zhuang, Aurélie Labbe and Lijun Sun).
