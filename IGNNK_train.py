@@ -1,5 +1,5 @@
 from __future__ import division
-
+​
 import torch
 import numpy as np
 import torch.optim as optim
@@ -13,11 +13,11 @@ import argparse
 import sys
 import os
 import time
-
+​
 def parse_args(args):
     '''Parse training options user can specify in command line.
     Specify hyper parameters here
-
+​
     Returns
     -------
     argparse.Namespace
@@ -27,7 +27,7 @@ def parse_args(args):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="Parse argument used when training IGNNK model.",
         epilog="python IGNNK_train.py DATASET, for example: python IGNNK_train.py 'metr' ")
-
+​
     # Requird input parametrs
     parser.add_argument(
         'dataset',type=str,default='metr',
@@ -80,7 +80,7 @@ def parse_args(args):
         help='Whether to plot the RMSE training result'
     )           
     return parser.parse_known_args(args)[0]
-
+​
 def load_data(dataset):
     '''Load dataset
     Input: dataset name
@@ -130,7 +130,7 @@ def load_data(dataset):
                                                     # the adjacent matrix are based on pairwise distance, 
                                                     # so we need not to construct it for each batch, we just use index to find the dynamic adjacent matrix  
     return A,X,training_set,test_set,unknow_set,full_set,know_set,training_set_s,A_s,capacity     
-
+​
 """
 Define the test error
 """
@@ -189,8 +189,8 @@ def test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
     
     return MAE, RMSE, MAPE
-
-
+​
+​
 def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     """
     :It only calculates the last time points' prediction error, and updates inputs each time point
@@ -214,7 +214,7 @@ def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     missing_index = np.ones(np.shape(test_data))
     missing_index[:, list(unknow_set)] = 0
     missing_index_s = missing_index
-
+​
     o = np.zeros([test_set.shape[0] - time_dim, test_inputs_s.shape[1]])
     
     for i in range(0, test_set.shape[0] - time_dim):
@@ -249,7 +249,7 @@ def rolling_test_error(STmodel, unknow_set, test_data, A_s, Missing0):
     MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)  #avoid x/0
         
     return MAE, RMSE, MAPE  
-
+​
 def plot_res(RMSE_list,dataset,time_batch):
     """
     Draw Learning curves on testing error
@@ -264,7 +264,7 @@ def plot_res(RMSE_list,dataset,time_batch):
     plt.grid(True)
     plt.tight_layout()
     plt.savefig('fig/learning_curve_{:}.pdf'.format(dataset))
-
+​
 if __name__ == "__main__":
     """
     Model training
@@ -286,7 +286,7 @@ if __name__ == "__main__":
     A,X,training_set,test_set,unknow_set,full_set,know_set,training_set_s,A_s,capacity = load_data(dataset)
     # Define model
     STmodel = IGNNK(h, z, K)  # The graph neural networks
-
+​
     criterion = nn.MSELoss()
     optimizer = optim.Adam(STmodel.parameters(), lr=learning_rate)
     RMSE_list = []

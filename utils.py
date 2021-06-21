@@ -5,7 +5,8 @@ import numpy as np
 import scipy.sparse as sp
 import pandas as pd
 from math import radians, cos, sin, asin, sqrt
-from sklearn.externals import joblib
+#from sklearn.externals import joblib
+import joblib
 import scipy.io
 import torch
 from torch import nn
@@ -272,6 +273,63 @@ def calculate_random_walk_matrix(adj_mx):
     random_walk_mx = d_mat_inv.dot(adj_mx).tocoo()
     return random_walk_mx.toarray()
 
+def test_error_missing(STmodel, unknow_set, test_data, A_s, E_maxvalue, Missing0,test_truth):
+    """
+    :param STmodel: The graph neural networks
+    :unknow_set: The unknow locations for spatial prediction
+    :test_data: The true value test_data of shape (test_num_timesteps, num_nodes)
+    :A_s: The full adjacent matrix
+    :Missing0: True: 0 in original datasets means missing data
+    :return: NAE, MAPE and RMSE
+    """
+    unknow_set = set(unknow_set)
+    time_dim = STmodel.time_dimension
+
+    test_omask = np.ones(test_data.shape)
+    if Missing0 == True:
+        test_omask[test_data == 0] = 0
+    test_inputs = (test_data * test_omask).astype('float32')
+    test_inputs_s = test_inputs
+
+    missing_index = np.ones(np.shape(test_data))
+    missing_index[:, list(unknow_set)] = 0
+    missing_index_s = missing_index
+
+    o = np.zeros([test_truth.shape[0]//time_dim*time_dim, test_inputs_s.shape[1]]) #Separate the test data into several h period
+
+    for i in range(0, test_truth.shape[0]//time_dim*time_dim, time_dim):
+        inputs = test_inputs_s[i:i+time_dim, :]
+        missing_inputs = missing_index_s[i:i+time_dim, :]
+        T_inputs = inputs*missing_inputs
+        T_inputs = T_inputs/E_maxvalue
+        T_inputs = np.expand_dims(T_inputs, axis = 0)
+        T_inputs = torch.from_numpy(T_inputs.astype('float32'))
+        A_q = torch.from_numpy((calculate_random_walk_matrix(A_s).T).astype('float32'))
+        A_h = torch.from_numpy((calculate_random_walk_matrix(A_s.T).T).astype('float32'))
+
+        imputation = STmodel(T_inputs, A_q, A_h)
+        imputation = imputation.data.numpy()
+        o[i:i+time_dim, :] = imputation[0, :, :]
+
+    o = o*E_maxvalue
+    truth = test_truth[0:test_data.shape[0]//time_dim*time_dim]
+    o[missing_index_s[0:test_data.shape[0]//time_dim*time_dim] == 1] = truth[missing_index_s[0:test_data.shape[0]//time_dim*time_dim] == 1]
+
+    test_mask =  1 - missing_index_s[0:test_data.shape[0]//time_dim*time_dim]
+    if Missing0 == True:
+        test_mask[truth == 0] = 0
+        o[truth == 0] = 0
+
+    o_ = o[:,list(unknow_set)]
+    truth_ = truth[:,list(unknow_set)]
+    test_mask_ = test_mask[:,list(unknow_set)]
+
+    MAE = np.sum(np.abs(o_ - truth_))/np.sum( test_mask_)
+    RMSE = np.sqrt(np.sum((o_ - truth_)*(o_ - truth_))/np.sum( test_mask_) )
+    # MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
+    R2 = 1 - np.sum( (o_ - truth_)*(o_ - truth_) )/np.sum( (truth_ - truth_.mean())*(truth_-truth_.mean() ) )
+    return MAE, RMSE, R2, o
+
 def test_error(STmodel, unknow_set, test_data, A_s, E_maxvalue, Missing0):
     """
     :param STmodel: The graph neural networks
@@ -280,22 +338,22 @@ def test_error(STmodel, unknow_set, test_data, A_s, E_maxvalue, Missing0):
     :A_s: The full adjacent matrix
     :Missing0: True: 0 in original datasets means missing data
     :return: NAE, MAPE and RMSE
-    """  
+    """
     unknow_set = set(unknow_set)
     time_dim = STmodel.time_dimension
-    
+
     test_omask = np.ones(test_data.shape)
     if Missing0 == True:
         test_omask[test_data == 0] = 0
     test_inputs = (test_data * test_omask).astype('float32')
     test_inputs_s = test_inputs
-   
+
     missing_index = np.ones(np.shape(test_data))
     missing_index[:, list(unknow_set)] = 0
     missing_index_s = missing_index
-    
+
     o = np.zeros([test_data.shape[0]//time_dim*time_dim, test_inputs_s.shape[1]]) #Separate the test data into several h period
-    
+
     for i in range(0, test_data.shape[0]//time_dim*time_dim, time_dim):
         inputs = test_inputs_s[i:i+time_dim, :]
         missing_inputs = missing_index_s[i:i+time_dim, :]
@@ -305,25 +363,26 @@ def test_error(STmodel, unknow_set, test_data, A_s, E_maxvalue, Missing0):
         T_inputs = torch.from_numpy(T_inputs.astype('float32'))
         A_q = torch.from_numpy((calculate_random_walk_matrix(A_s).T).astype('float32'))
         A_h = torch.from_numpy((calculate_random_walk_matrix(A_s.T).T).astype('float32'))
-        
+
         imputation = STmodel(T_inputs, A_q, A_h)
         imputation = imputation.data.numpy()
         o[i:i+time_dim, :] = imputation[0, :, :]
-    
-    o = o*E_maxvalue 
+    o = o*E_maxvalue
     truth = test_inputs_s[0:test_data.shape[0]//time_dim*time_dim]
     o[missing_index_s[0:test_data.shape[0]//time_dim*time_dim] == 1] = truth[missing_index_s[0:test_data.shape[0]//time_dim*time_dim] == 1]
-    
     test_mask =  1 - missing_index_s[0:test_data.shape[0]//time_dim*time_dim]
     if Missing0 == True:
         test_mask[truth == 0] = 0
         o[truth == 0] = 0
+    o_ = o[:,list(unknow_set)]
+    truth_ = truth[:,list(unknow_set)]
+    test_mask_ = test_mask[:,list(unknow_set)]
     
-    MAE = np.sum(np.abs(o - truth))/np.sum( test_mask)
-    RMSE = np.sqrt(np.sum((o - truth)*(o - truth))/np.sum( test_mask) )
-    MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
-    
-    return MAE, RMSE, MAPE, o
+    MAE = np.sum(np.abs(o_ - truth_))/np.sum( test_mask_)
+    RMSE = np.sqrt(np.sum((o_ - truth_)*(o_ - truth_))/np.sum( test_mask_) )
+    # MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
+    R2 = 1 - np.sum( (o_ - truth_)*(o_ - truth_) )/np.sum( (truth_ - truth_.mean())*(truth_-truth_.mean() ) )
+    return MAE, RMSE, R2, o
 
 
 def rolling_test_error(STmodel, unknow_set, test_data, A_s, E_maxvalue,Missing0):
@@ -402,7 +461,7 @@ def test_error_cap(STmodel, unknow_set, full_set, test_set, A,time_dim,capacitie
         inputs = test_inputs_s[i:i+time_dim, :]
         missing_inputs = missing_index_s[i:i+time_dim, :]
         MF_inputs = inputs*missing_inputs
-        MF_inputs = MF_inputs/capacities
+        MF_inputs = MF_inputs
         MF_inputs = np.expand_dims(MF_inputs, axis = 0)
         MF_inputs = torch.from_numpy(MF_inputs.astype('float32'))
         A_q = torch.from_numpy((calculate_random_walk_matrix(A_s).T).astype('float32'))
@@ -414,14 +473,19 @@ def test_error_cap(STmodel, unknow_set, full_set, test_set, A,time_dim,capacitie
     
     o = o*capacities
     truth = test_inputs_s[0:test_set.shape[0]//time_dim*time_dim]
+    truth = truth*capacities
     o[missing_index_s[0:test_set.shape[0]//time_dim*time_dim] == 1] = truth[missing_index_s[0:test_set.shape[0]//time_dim*time_dim] == 1]
     o[truth == 0] = 0
     
     test_mask =  1 - missing_index_s[0:test_set.shape[0]//time_dim*time_dim]
     test_mask[truth == 0] = 0
     
-    MAE = np.sum(np.abs(o - truth))/np.sum( test_mask)
-    RMSE = np.sqrt(np.sum((o - truth)*(o - truth))/np.sum( test_mask) )
-    MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
-    
-    return MAE, RMSE, MAPE ,o 
+    o_ = o[:,list(unknow_set)]
+    truth_ = truth[:,list(unknow_set)]
+    test_mask_ = test_mask[:,list(unknow_set)]
+
+    MAE = np.sum(np.abs(o_ - truth_))/np.sum( test_mask_)
+    RMSE = np.sqrt(np.sum((o_ - truth_)*(o_ - truth_))/np.sum( test_mask_) )
+    # MAPE = np.sum(np.abs(o - truth)/(truth + 1e-5))/np.sum( test_mask)
+    R2 = 1 - np.sum( (o_ - truth_)*(o_ - truth_) )/np.sum( (truth_ - truth_.mean())*(truth_-truth_.mean() ) )
+    return MAE, RMSE, R2, o
